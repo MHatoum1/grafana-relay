@@ -5,7 +5,7 @@ const app = express();
 const PORT = 8080;
 
 // Grafana backend (private)
-const targetUrl = 'http://IP:PORT';
+const targetUrl = 'http://http://172.187.176.177:3030';
 
 app.use(
   '/',
