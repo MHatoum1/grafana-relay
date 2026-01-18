@@ -2,25 +2,37 @@ const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
-const PORT = 8080; // Or any port you prefer
+const PORT = 8080;
 
-// Define the target domain or IP
-const targetUrl = 'http://172.187.176.177:3030'; // Replace with your target domain or IP
+// Grafana backend (private)
+const targetUrl = 'http://IP:PORT';
 
-// Set up the proxy middleware
-app.use('/', createProxyMiddleware({
+app.use(
+  '/',
+  createProxyMiddleware({
     target: targetUrl,
     changeOrigin: true,
-    ws: true, // Add this line to support WebSocket
+    ws: true,
+
     onProxyReq: (proxyReq, req, res) => {
-        // Modify headers if needed
-        proxyReq.setHeader('X-Added', 'foobar');
+      proxyReq.setHeader('Host', 'grafana.alphatrust.ai');
+      proxyReq.setHeader('X-Forwarded-Host', 'grafana.alphatrust.ai');
+      proxyReq.setHeader('X-Forwarded-Proto', 'https');
+      proxyReq.setHeader('X-Forwarded-For', req.ip);
     },
+
+    onProxyReqWs: (proxyReq, req, socket, options, head) => {
+      proxyReq.setHeader('Host', 'grafana.alphatrust.ai');
+      proxyReq.setHeader('X-Forwarded-Proto', 'https');
+    },
+
     onError: (err, req, res) => {
-        res.status(500).send('Something went wrong.');
+      console.error(err);
+      res.status(500).send('Proxy error');
     }
-}));
+  })
+);
 
 app.listen(PORT, () => {
-    console.log(`Relay service is running on port ${PORT} and redirecting to ${targetUrl}`);
+  console.log(`Grafana relay running at https://grafana.alphatrust.ai`);
 });
